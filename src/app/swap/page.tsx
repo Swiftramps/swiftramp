@@ -46,8 +46,8 @@ const CSS = `
   @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600&display=swap');
 
   .swap-page {
-    --sw-bg-0: #F8E8FA;
-    --sw-bg-1: #F0E0F0;
+    --sw-bg-0: #F0E0E0;
+    --sw-bg-1: #E8D8D8;
     --sw-card: #FFFFFF;
     --sw-card-border: #EAEAE6;
     --sw-line: #EAEAE6;
