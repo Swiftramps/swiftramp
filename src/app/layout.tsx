@@ -1,6 +1,18 @@
-import type { Metadata } from 'next'
+import type { Metadata, Viewport } from 'next'
 import './globals.css'
-export const metadata: Metadata = { title: 'SwiftRamp – Cross-Border Remittance', description: 'Fast, cheap cross-border payments on Stellar' }
+export const metadata: Metadata = {
+  openGraph: {
+    title: 'SwiftRamp – Cross-Border Remittance',
+    description: 'Fast, cheap cross-border payments on Stellar',
+    siteName: 'SwiftRamp',
+    type: 'website',
+  }, title: 'SwiftRamp – Cross-Border Remittance', description: 'Fast, cheap cross-border payments on Stellar' }
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  themeColor: '#17462B',
+}
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
