@@ -10,12 +10,7 @@ out/
 
 # Environment / config
 config.bat
-.env
-.env.local
 .env.*.local
-.env.development
-.env.production
-.env.test
 
 # Cache
 .cache/
@@ -52,7 +47,6 @@ ehthumbs.db
 Desktop.ini
 
 # Editor/IDE
-.vscode/
 .idea/
 *.swp
 *.swo
