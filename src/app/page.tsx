@@ -1,8 +1,9 @@
 'use client'
 import { useState, useEffect, useRef } from 'react'
 import Navbar from '../../components/Navbar'
+import RateStatus from '../../components/RateStatus'
+import { useRates } from '../lib/useRates'
 
-const rates: Record<string, number> = { NGN: 1580, KES: 130, GHS: 15.6, ZAR: 18.9, USD: 1, EUR: 0.93, GBP: 0.79 }
 const flags: Record<string, string> = { NGN: '🇳🇬', KES: '🇰🇪', GHS: '🇬🇭', ZAR: '🇿🇦', USD: '🇺🇸', EUR: '🇪🇺', GBP: '🇬🇧' }
 const ccyList = ['NGN', 'KES', 'GHS', 'ZAR', 'USD', 'EUR']
 
@@ -287,6 +288,10 @@ const CSS = `
   }
   .rate-bar .fee { color: var(--accent); font-weight: 600; }
   .rate-bar .shielded { color: var(--privacy); font-weight: 600; display: flex; align-items: center; gap: 5px; }
+  .rate-loading, .rate-warning { margin: 0 0 14px; padding: 10px 12px; border-radius: 10px; font-size: 12px; text-align: center; }
+  .rate-loading { color: transparent; background: linear-gradient(90deg, var(--fill), var(--line), var(--fill)); background-size: 200% 100%; animation: rateShimmer 1.2s infinite; }
+  .rate-warning { color: #725300; background: #FFF7D6; border: 1px solid #F2D77D; }
+  @keyframes rateShimmer { to { background-position: -200% 0; } }
   .send-btn {
     width: 100%; background: var(--ink); color: #fff; border: none; border-radius: 14px;
     padding: 18px; font-size: 16px; font-weight: 700; cursor: pointer;
@@ -456,6 +461,7 @@ function CopyIcon({ size = 16, color = 'currentColor' }: { size?: number; color?
 }
 
 export default function Home() {
+  const { rates, loading: ratesLoading, stale: ratesStale } = useRates()
   const [isClient, setIsClient] = useState(false)
   const [sendAmt, setSendAmt] = useState('100')
   const [fromCcy, setFromCcy] = useState('USD')
@@ -652,7 +658,8 @@ export default function Home() {
               </select>
             </div>
 
-            <div className="rate-bar">
+            <RateStatus loading={ratesLoading} stale={ratesStale} />
+            <div className="rate-bar" aria-busy={ratesLoading}>
               <span style={{ color: 'var(--muted)' }}>1 {fromCcy} = {(rates[toCcy] / rates[fromCcy]).toFixed(4)} {toCcy}</span>
               <span className="shielded"><LockIcon size={11} color="var(--privacy)" /> Amount hidden on-chain</span>
             </div>
