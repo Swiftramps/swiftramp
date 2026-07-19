@@ -1,7 +1,7 @@
 'use client'
 import Navbar from '../../../components/Navbar'
 
-const flags: Record<string, string> = { NGN: '🇳🇬', KES: '🇰🇪', GHS: '🇬🇭', ZAR: '🇿🇦', USD: '🇺🇸', EUR: '🇪🇺', GBP: '🇬🇧' }
+import { flags } from '@/lib/constants'
 
 // Same node layout as the homepage globe, reused at company scale to make
 // the point concrete: this is the literal footprint the company operates in.

@@ -2,13 +2,7 @@
 import { useState, useMemo } from 'react'
 import Navbar from '../../../components/Navbar'
 
-const rates: Record<string, number> = { NGN: 1580, KES: 130, GHS: 15.6, ZAR: 18.9, USD: 1, EUR: 0.93, GBP: 0.79 }
-const flags: Record<string, string> = { NGN: '🇳🇬', KES: '🇰🇪', GHS: '🇬🇭', ZAR: '🇿🇦', USD: '🇺🇸', EUR: '🇪🇺', GBP: '🇬🇧' }
-const names: Record<string, string> = {
-  NGN: 'Nigerian naira', KES: 'Kenyan shilling', GHS: 'Ghanaian cedi', ZAR: 'South African rand',
-  USD: 'US dollar', EUR: 'Euro', GBP: 'British pound',
-}
-const ccyList = ['USD', 'EUR', 'GBP', 'NGN', 'KES', 'GHS', 'ZAR']
+import { rates, flags, names, ccyList } from '@/lib/constants'
 
 // Base currency the board quotes against. Fixed deliberately — this is a
 // reference board, not the swap form, so it doesn't need a picker.

@@ -1,9 +1,7 @@
 'use client'
 import { useState, useEffect, useRef } from 'react'
 
-const rates: Record<string, number> = { NGN: 1580, KES: 130, GHS: 15.6, ZAR: 18.9, USD: 1, EUR: 0.93, GBP: 0.79 }
-const flags: Record<string, string> = { NGN: '🇳🇬', KES: '🇰🇪', GHS: '🇬🇭', ZAR: '🇿🇦', USD: '🇺🇸', EUR: '🇪🇺', GBP: '🇬🇧' }
-const ccyList = ['NGN', 'KES', 'GHS', 'ZAR', 'USD', 'EUR']
+import { rates, flags, ccyList } from '@/lib/constants'
 const tickerPairs = [
   ['USD', 'NGN'], ['USD', 'KES'], ['USD', 'GHS'], ['USD', 'ZAR'], ['EUR', 'NGN'], ['GBP', 'NGN'], ['USD', 'EUR'],
 ]
