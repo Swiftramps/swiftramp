@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
+    "test": "node --test --experimental-strip-types tests/*.test.mjs",
     "start": "next start"
   },
   "dependencies": {

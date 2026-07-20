@@ -1,6 +1,8 @@
 'use client'
 import { useState, useMemo } from 'react'
 import Navbar from '../../../components/Navbar'
+import RateStatus from '../../../components/RateStatus'
+import { useRates } from '../../lib/useRates'
 
 import { rates, flags, names, ccyList } from '@/lib/constants'
 
@@ -95,6 +97,10 @@ const CSS = `
   }
   .board-live { display: flex; align-items: center; gap: 6px; }
   .live-dot { width: 6px; height: 6px; border-radius: 50%; background: #7FD99A; animation: pulse 1.6s ease-in-out infinite; }
+  .rate-loading, .rate-warning { margin: 0 0 14px; padding: 11px 14px; border-radius: 10px; font-size: 12px; text-align: center; }
+  .rate-loading { color: transparent; background: linear-gradient(90deg, #222, #444, #222); background-size: 200% 100%; animation: rateShimmer 1.2s infinite; }
+  .rate-warning { color: #725300; background: #FFF7D6; border: 1px solid #F2D77D; }
+  @keyframes rateShimmer { to { background-position: -200% 0; } }
 
   @media (max-width: 560px) {
     .board-head, .board-row { grid-template-columns: 1.8fr 1fr 0.9fr; }
@@ -145,6 +151,7 @@ const CSS = `
 `
 
 export default function RatesPage() {
+  const { rates, loading: ratesLoading, stale: ratesStale } = useRates()
   const [amt, setAmt] = useState('100')
   const [toCcy, setToCcy] = useState('NGN')
 
@@ -173,6 +180,7 @@ export default function RatesPage() {
       </div>
 
       <div className="board-wrap fade-up" style={{ animationDelay: '0.2s' }}>
+        <RateStatus loading={ratesLoading} stale={ratesStale} />
         <div className="board">
           <div className="board-base-row">
             <span>1.00 {flags[BASE]} {BASE} converts to —</span>

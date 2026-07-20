@@ -4,7 +4,6 @@ import RateStatus from '../../../components/RateStatus'
 import { useRates } from '../../lib/useRates'
 import AuditVerifiedBadge from '../../../components/AuditVerifiedBadge'
 import { generateProof } from '../../lib/prover'
-
 import { rates, flags, ccyList } from '@/lib/constants'
 const tickerPairs = [
   ['USD', 'NGN'], ['USD', 'KES'], ['USD', 'GHS'], ['USD', 'ZAR'], ['EUR', 'NGN'], ['GBP', 'NGN'], ['USD', 'EUR'],
@@ -224,6 +223,10 @@ const CSS = `
     padding: 13px 15px; margin: 22px 0 20px; font-family: 'IBM Plex Mono', monospace; font-size: 12px;
   }
   .rate-bar .shielded { color: var(--sw-violet); font-weight: 600; display: flex; align-items: center; gap: 5px; }
+  .rate-loading, .rate-warning { margin: 0 0 14px; padding: 10px 12px; border-radius: 10px; font-size: 12px; text-align: center; }
+  .rate-loading { color: transparent; background: linear-gradient(90deg, var(--sw-fill), var(--sw-line), var(--sw-fill)); background-size: 200% 100%; animation: rateShimmer 1.2s infinite; }
+  .rate-warning { color: #725300; background: #FFF7D6; border: 1px solid #F2D77D; }
+  @keyframes rateShimmer { to { background-position: -200% 0; } }
   .send-btn {
     width: 100%; background: linear-gradient(135deg, var(--sw-violet), #6F5CE0); color: #fff; border: none; border-radius: 14px;
     padding: 17px; font-size: 15.5px; font-weight: 700; cursor: pointer;
@@ -392,6 +395,7 @@ function CopyIcon({ size = 16, color = 'currentColor' }: { size?: number; color?
 }
 
 export default function SwapPage() {
+  const { rates, loading: ratesLoading, stale: ratesStale } = useRates()
   const [isClient, setIsClient] = useState(false)
   const [walletAddress, setWalletAddress] = useState<string | null>(null)
   const [sendAmt, setSendAmt] = useState('100')
@@ -581,7 +585,8 @@ export default function SwapPage() {
               </select>
             </div>
 
-            <div className="rate-bar">
+            <RateStatus loading={ratesLoading} stale={ratesStale} />
+            <div className="rate-bar" aria-busy={ratesLoading}>
               <span style={{ color: 'var(--sw-muted)' }}>1 {fromCcy} = {(rates[toCcy] / rates[fromCcy]).toFixed(4)} {toCcy}</span>
               <span className="shielded"><LockIcon size={11} color="var(--sw-violet)" /> Amount hidden on-chain</span>
             </div>
