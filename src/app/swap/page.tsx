@@ -1,5 +1,6 @@
 'use client'
 import { useState, useEffect, useRef } from 'react'
+import AuditVerifiedBadge from '../../../components/AuditVerifiedBadge'
 
 import { rates, flags, ccyList } from '@/lib/constants'
 const tickerPairs = [
@@ -598,6 +599,7 @@ export default function SwapPage() {
             <h2 className="swap-display">Sent</h2>
             <p>{receive} {toCcy} is on its way · Arrives in ~5 seconds</p>
             <div className="zk-verified-badge"><ShieldIcon size={12} color="var(--sw-mint)" /> zk-SNARK proof verified</div>
+            <AuditVerifiedBadge proofHash={proofHex} />
             <table className="audit-table">
               <tbody>
                 <tr>
