@@ -224,6 +224,10 @@ const CSS = `
     font-size: 15px; 
     cursor: pointer;
     font-family: 'IBM Plex Sans', sans-serif;
+    display: block;
+    text-align: center;
+    text-decoration: none;
+    box-sizing: border-box;
   }
 
   @media (max-width: 760px) {
@@ -330,7 +334,7 @@ export default function Navbar() {
         {LINKS.map(l => (
           <a key={l.label} href={l.href} onClick={() => setOpen(false)}>{l.label}</a>
         ))}
-        <button className="navbar-mobile-cta" onClick={() => setOpen(false)}>Get started</button>
+        <a href="/get-started" className="navbar-mobile-cta" onClick={() => setOpen(false)}>Get started</a>
       </div>
     </>
   )

@@ -1,9 +1,9 @@
 'use client'
 import { useState, useEffect, useRef } from 'react'
-
-const rates: Record<string, number> = { NGN: 1580, KES: 130, GHS: 15.6, ZAR: 18.9, USD: 1, EUR: 0.93, GBP: 0.79 }
-const flags: Record<string, string> = { NGN: '🇳🇬', KES: '🇰🇪', GHS: '🇬🇭', ZAR: '🇿🇦', USD: '🇺🇸', EUR: '🇪🇺', GBP: '🇬🇧' }
-const ccyList = ['NGN', 'KES', 'GHS', 'ZAR', 'USD', 'EUR']
+import RateStatus from '../../../components/RateStatus'
+import { useRates } from '../../lib/useRates'
+import AuditVerifiedBadge from '../../../components/AuditVerifiedBadge'
+import { rates, flags, ccyList } from '@/lib/constants'
 const tickerPairs = [
   ['USD', 'NGN'], ['USD', 'KES'], ['USD', 'GHS'], ['USD', 'ZAR'], ['EUR', 'NGN'], ['GBP', 'NGN'], ['USD', 'EUR'],
 ]
@@ -222,6 +222,10 @@ const CSS = `
     padding: 13px 15px; margin: 22px 0 20px; font-family: 'IBM Plex Mono', monospace; font-size: 12px;
   }
   .rate-bar .shielded { color: var(--sw-violet); font-weight: 600; display: flex; align-items: center; gap: 5px; }
+  .rate-loading, .rate-warning { margin: 0 0 14px; padding: 10px 12px; border-radius: 10px; font-size: 12px; text-align: center; }
+  .rate-loading { color: transparent; background: linear-gradient(90deg, var(--sw-fill), var(--sw-line), var(--sw-fill)); background-size: 200% 100%; animation: rateShimmer 1.2s infinite; }
+  .rate-warning { color: #725300; background: #FFF7D6; border: 1px solid #F2D77D; }
+  @keyframes rateShimmer { to { background-position: -200% 0; } }
   .send-btn {
     width: 100%; background: linear-gradient(135deg, var(--sw-violet), #6F5CE0); color: #fff; border: none; border-radius: 14px;
     padding: 17px; font-size: 15.5px; font-weight: 700; cursor: pointer;
@@ -262,7 +266,7 @@ const CSS = `
   .proof-hex {
     font-family: 'IBM Plex Mono', monospace; font-size: 10.5px; color: var(--sw-violet);
     background: var(--sw-violet-soft); border-radius: 10px; padding: 12px 14px;
-    margin-bottom: 20px; word-break: break-all; line-height: 1.6;
+    margin-bottom: 20px; word-break: break-word; overflow-wrap: anywhere; line-height: 1.6;
   }
   .proof-steps { display: flex; flex-direction: column; gap: 15px; }
   .proof-step { display: flex; align-items: flex-start; gap: 12px; opacity: 0.32; transition: opacity 0.3s ease; }
@@ -299,16 +303,51 @@ const CSS = `
     padding: 6px 14px; font-family: 'IBM Plex Mono', monospace; font-size: 11px;
     font-weight: 600; margin-bottom: 20px;
   }
-  .tx-row {
+  .audit-table {
+    width: 100%; border-collapse: collapse; margin-bottom: 20px;
     background: var(--sw-fill); border: 1px solid var(--sw-line); border-radius: 10px;
-    padding: 13px; font-family: 'IBM Plex Mono', monospace; font-size: 11.5px; color: var(--sw-muted);
-    margin-bottom: 20px; word-break: break-all; text-align: left;
+    overflow: hidden; text-align: left;
   }
-  .tx-row .tx-label { color: var(--sw-ink); font-weight: 600; display: block; margin-bottom: 4px; font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; }
+  .audit-table th, .audit-table td {
+    padding: 13px; border-bottom: 1px solid var(--sw-line); font-family: 'IBM Plex Mono', monospace;
+  }
+  .audit-table tr:last-child th, .audit-table tr:last-child td {
+    border-bottom: none;
+  }
+  .audit-table th {
+    font-size: 10px; color: var(--sw-ink); font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.08em; width: 35%;
+    vertical-align: middle;
+  }
+  .audit-table td {
+    font-size: 11.5px; color: var(--sw-muted); vertical-align: middle;
+  }
+  .audit-val {
+    display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  }
+  .hex-wrap {
+    word-break: break-word; overflow-wrap: anywhere;
+  }
+  .copy-btn {
+    background: transparent; border: none; color: var(--sw-muted);
+    cursor: pointer; display: flex; align-items: center; justify-content: center;
+    width: 44px; height: 44px; flex-shrink: 0;
+    transition: color 0.2s ease, background 0.2s ease; border-radius: 8px;
+  }
+  .copy-btn:hover { color: var(--sw-ink); background: var(--sw-line); }
+  .copy-btn:active { transform: scale(0.95); }
 
   @media (max-width: 600px) {
     .swap-hero h1 { font-size: 27px; }
     .swap-topbar { padding: 16px 20px; }
+
+    .audit-table, .audit-table tbody, .audit-table tr, .audit-table th, .audit-table td {
+      display: block; width: 100%;
+    }
+    .audit-table tr { border-bottom: 1px solid var(--sw-line); }
+    .audit-table tr:last-child { border-bottom: none; }
+    .audit-table th { border-bottom: none; padding-bottom: 2px; padding-top: 13px; }
+    .audit-table td { padding-top: 4px; padding-bottom: 13px; border-bottom: none; }
   }
 `
 
@@ -345,7 +384,17 @@ function ArrowLeftIcon({ size = 12, color = 'currentColor' }: { size?: number; c
   )
 }
 
+function CopyIcon({ size = 16, color = 'currentColor' }: { size?: number; color?: string }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <rect x="9" y="9" width="11" height="11" rx="2" stroke={color} strokeWidth="1.6" />
+      <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1" stroke={color} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  )
+}
+
 export default function SwapPage() {
+  const { rates, loading: ratesLoading, stale: ratesStale } = useRates()
   const [isClient, setIsClient] = useState(false)
   const [walletAddress, setWalletAddress] = useState<string | null>(null)
   const [sendAmt, setSendAmt] = useState('100')
@@ -515,7 +564,8 @@ export default function SwapPage() {
               </select>
             </div>
 
-            <div className="rate-bar">
+            <RateStatus loading={ratesLoading} stale={ratesStale} />
+            <div className="rate-bar" aria-busy={ratesLoading}>
               <span style={{ color: 'var(--sw-muted)' }}>1 {fromCcy} = {(rates[toCcy] / rates[fromCcy]).toFixed(4)} {toCcy}</span>
               <span className="shielded"><LockIcon size={11} color="var(--sw-violet)" /> Amount hidden on-chain</span>
             </div>
@@ -556,14 +606,29 @@ export default function SwapPage() {
             <h2 className="swap-display">Sent</h2>
             <p>{receive} {toCcy} is on its way · Arrives in ~5 seconds</p>
             <div className="zk-verified-badge"><ShieldIcon size={12} color="var(--sw-mint)" /> zk-SNARK proof verified</div>
-            <div className="tx-row">
-              <span className="tx-label">Transaction</span>
-              stellar.expert/tx/a3f...9bc
-            </div>
-            <div className="tx-row">
-              <span className="tx-label">Proof commitment (amount stays private)</span>
-              0x{proofHex}
-            </div>
+            <AuditVerifiedBadge proofHash={proofHex} />
+            <table className="audit-table">
+              <tbody>
+                <tr>
+                  <th>Transaction</th>
+                  <td>
+                    <div className="audit-val">
+                      <span className="hex-wrap">stellar.expert/tx/a3f...9bc</span>
+                      <button className="copy-btn" aria-label="Copy transaction link"><CopyIcon size={16} /></button>
+                    </div>
+                  </td>
+                </tr>
+                <tr>
+                  <th>Preimage</th>
+                  <td>
+                    <div className="audit-val">
+                      <span className="hex-wrap">0x{proofHex}</span>
+                      <button className="copy-btn" aria-label="Copy preimage hex"><CopyIcon size={16} /></button>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
             <button onClick={reset} className="btn-ghost">Send another</button>
           </div>
         )}
