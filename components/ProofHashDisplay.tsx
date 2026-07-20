@@ -7,6 +7,9 @@ interface ProofHashDisplayProps {
   proofType?: string
   curve?: string
   computationTimeMs?: number
+  onVerify?: () => void
+  isVerified?: boolean
+  status?: string
 }
 
 export default function ProofHashDisplay({
@@ -15,6 +18,9 @@ export default function ProofHashDisplay({
   proofType = 'zk-SNARK / Groth16',
   curve = 'BN254',
   computationTimeMs = 84,
+  onVerify,
+  isVerified = false,
+  status = 'Verified',
 }: ProofHashDisplayProps) {
   const [copied, setCopied] = React.useState(false)
 
@@ -113,6 +119,40 @@ export default function ProofHashDisplay({
       font-weight: 600;
       color: #0A0A0A;
     }
+    .action-btn {
+      font-family: 'Space Grotesk', sans-serif;
+      font-weight: 700;
+      font-size: 13px;
+      color: #FFFFFF;
+      background: linear-gradient(135deg, #5B3DF5, #6F5CE0);
+      border: none;
+      border-radius: 10px;
+      padding: 10px 16px;
+      cursor: pointer;
+      width: 100%;
+      text-align: center;
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+      margin-top: 12px;
+    }
+    .action-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(91,61,245,0.25);
+    }
+    .verified-badge {
+      background: #DCE8DE;
+      color: #17462B;
+      border: 1.5px solid rgba(23, 70, 43, 0.15);
+      border-radius: 10px;
+      padding: 10px 16px;
+      font-size: 13px;
+      font-weight: 600;
+      text-align: center;
+      margin-top: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
   `
 
   if (isLoading) {
@@ -154,27 +194,61 @@ export default function ProofHashDisplay({
         <span className="proof-badge">zk-SNARK</span>
       </div>
 
-      <div className="proof-hex-box" onClick={handleCopy} title="Click to copy proof commitment">
-        {proofHex}
-        <span className="copy-indicator" style={{ color: copied ? '#17462B' : '#5B3DF5' }}>
-          {copied ? '✓ Copied' : 'Click to copy'}
-        </span>
-      </div>
+      {status === 'Unverified' ? (
+        <div style={{
+          fontFamily: 'IBM Plex Mono',
+          fontSize: '12px',
+          color: '#6B6960',
+          background: '#F6F6F3',
+          border: '1.5px dashed #EAEAE6',
+          borderRadius: '10px',
+          padding: '24px 16px',
+          textAlign: 'center',
+          flex: 1,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          marginBottom: '16px'
+        }}>
+          Awaiting compliance enrollment to compute commitment...
+        </div>
+      ) : (
+        <>
+          <div className="proof-hex-box" onClick={handleCopy} title="Click to copy proof commitment" id="proof-hash-display">
+            {proofHex}
+            <span className="copy-indicator" style={{ color: copied ? '#17462B' : '#5B3DF5' }}>
+              {copied ? '✓ Copied' : 'Click to copy'}
+            </span>
+          </div>
 
-      <div className="proof-grid">
-        <div className="proof-param">
-          <span className="proof-param-label">Verifier Engine</span>
-          <span className="proof-param-val">{proofType}</span>
-        </div>
-        <div className="proof-param">
-          <span className="proof-param-label">Elliptic Curve</span>
-          <span className="proof-param-val">{curve} (Verified on-chain)</span>
-        </div>
-        <div className="proof-param" style={{ gridColumn: 'span 2' }}>
-          <span className="proof-param-label">Computation Time</span>
-          <span className="proof-param-val">{computationTimeMs}ms (Pedersen + SNARK)</span>
-        </div>
-      </div>
+          <div className="proof-grid">
+            <div className="proof-param">
+              <span className="proof-param-label">Verifier Engine</span>
+              <span className="proof-param-val">{proofType}</span>
+            </div>
+            <div className="proof-param">
+              <span className="proof-param-label">Elliptic Curve</span>
+              <span className="proof-param-val">{curve} (Verified on-chain)</span>
+            </div>
+            <div className="proof-param" style={{ gridColumn: 'span 2' }}>
+              <span className="proof-param-label">Computation Time</span>
+              <span className="proof-param-val">{computationTimeMs}ms (Pedersen + SNARK)</span>
+            </div>
+          </div>
+
+          {isVerified ? (
+            <div className="verified-badge" id="verified-indicator">
+              ✓ Cryptographic Proof Verified on Ledger
+            </div>
+          ) : (
+            onVerify && (
+              <button className="action-btn" onClick={onVerify} id="verify-btn">
+                Verify Proof on Ledger
+              </button>
+            )
+          )}
+        </>
+      )}
     </div>
   )
 }
