@@ -4,6 +4,7 @@ import Navbar from '../../components/Navbar'
 import RateStatus from '../../components/RateStatus'
 import { useRates } from '../lib/useRates'
 import AuditVerifiedBadge from '../../components/AuditVerifiedBadge'
+import { generateProof } from '../../lib/prover'
 import { rates, flags, ccyList } from '@/lib/constants'
 
 // Abstract nodes scattered across a globe silhouette — positions are illustrative, not a real map
@@ -486,22 +487,40 @@ export default function Home() {
   }, [isClient, proofHex])
 
   useEffect(() => {
-    if (status !== 'proving') return
-    timers.current.forEach(clearTimeout)
-    timers.current = []
-    setProofStepIdx(-1)
+    if (status !== 'proving') return;
+    let isCancelled = false;
 
-    PROOF_STEPS.forEach((_, i) => {
-      const t = setTimeout(() => {
-        setProofStepIdx(i)
-        setProofHex(randomHex(48))
-      }, 480 + i * 620)
-      timers.current.push(t)
-    })
-    const finish = setTimeout(() => setStatus('sent'), 480 + PROOF_STEPS.length * 620 + 380)
-    timers.current.push(finish)
+    async function runProving() {
+      setProofStepIdx(0);
+      await new Promise(r => setTimeout(r, 480));
+      if (isCancelled) return;
 
-    return () => timers.current.forEach(clearTimeout)
+      setProofStepIdx(1);
+      
+      try {
+        const result = await generateProof({
+          amount_in: sendAmt,
+          amount_out: receive,
+          secret: randomHex(16)
+        });
+        
+        if (isCancelled) return;
+        setProofHex(result.proofHex);
+        setProofStepIdx(2);
+        
+        await new Promise(r => setTimeout(r, 620));
+        if (isCancelled) return;
+        
+        setStatus('sent');
+      } catch (err) {
+        console.error(err);
+        if (!isCancelled) setStatus('idle');
+      }
+    }
+
+    runProving();
+
+    return () => { isCancelled = true; };
   }, [status])
 
   const handleSend = () => setStatus('proving')
