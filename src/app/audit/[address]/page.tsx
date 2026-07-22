@@ -4,11 +4,13 @@ import { useState, useEffect, useMemo } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Navbar from '../../../../components/Navbar'
 import ProofHashDisplay from '../../../../components/ProofHashDisplay'
+import PreimageDetails from '../../../../components/PreimageDetails'
 
 interface AuditEvent {
   id: string
   type: 'Enrolled' | 'Cancelled'
   timestamp: string
+  queueId: string
   proofHash: string
   txHash: string
   ledger: number
@@ -56,6 +58,7 @@ function generateMockEvents(address: string): AuditEvent[] {
       id: `evt-${i}-${makeHex(seed + i, 8)}`,
       type: isEnrolled ? 'Enrolled' : 'Cancelled',
       timestamp: eventTime,
+      queueId: `remit-queue-${String((seed % 9) + 1).padStart(2, '0')}`,
       proofHash: `0x${makeHex(seed + i * 17, 48)}`,
       txHash: makeHex(seed + i * 31, 64),
       ledger,
@@ -596,6 +599,14 @@ export default function AuditPage() {
                         <span className="audit-label">Proof Hash</span>
                         <div className="audit-val-cell">
                           <ProofHashDisplay proofHash={evt.proofHash} verified={evt.verified} />
+                          <div style={{ marginTop: '10px' }}>
+                            <PreimageDetails
+                              address={address}
+                              queueId={evt.queueId}
+                              timestamp={evt.timestamp}
+                              recordedHash={evt.proofHash}
+                            />
+                          </div>
                         </div>
 
                         <span className="audit-label" style={{ marginTop: '16px' }}>Ledger Tx</span>
