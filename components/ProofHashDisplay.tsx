@@ -1,254 +1,256 @@
-import React from 'react'
-import Skeleton from './Skeleton'
+'use client'
+
+import { useState } from 'react'
 
 interface ProofHashDisplayProps {
-  isLoading: boolean
-  proofHex?: string
-  proofType?: string
-  curve?: string
-  computationTimeMs?: number
-  onVerify?: () => void
-  isVerified?: boolean
-  status?: string
+  proofHash?: string
+  verified?: boolean
+  loading?: boolean
+  error?: string
+}
+
+const CSS = `
+  .phd-container {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .phd-box {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--fill, #F6F6F3);
+    border: 1px solid var(--line, #EAEAE6);
+    border-radius: 12px;
+    padding: 10px 14px;
+    gap: 12px;
+    width: 100%;
+    min-width: 0;
+  }
+
+  .phd-hash {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 13px;
+    color: var(--ink, #0A0A0A);
+    word-break: break-all;
+    overflow-wrap: anywhere;
+    user-select: all;
+    min-width: 0;
+    flex: 1;
+  }
+
+  .phd-copy-btn {
+    background: transparent;
+    border: none;
+    color: var(--muted, #6B6960);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    flex-shrink: 0;
+    border-radius: 8px;
+    transition: all 0.2s ease;
+  }
+
+  .phd-copy-btn:hover {
+    color: var(--ink, #0A0A0A);
+    background: var(--line, #EAEAE6);
+  }
+
+  .phd-copy-btn:active {
+    transform: scale(0.95);
+  }
+
+  .phd-badge-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .phd-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: 100px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  .phd-badge.verified {
+    background: var(--accent-soft, #DCE8DE);
+    color: var(--accent, #17462B);
+  }
+
+  .phd-badge.unverified {
+    background: var(--line, #EAEAE6);
+    color: var(--muted, #6B6960);
+  }
+
+  /* Skeleton loading state */
+  .phd-skeleton {
+    background: linear-gradient(90deg, #F0F0EE 25%, #E6E6E3 50%, #F0F0EE 75%);
+    background-size: 200% 100%;
+    animation: phdPulse 1.5s infinite;
+  }
+
+  .phd-skeleton-box {
+    height: 54px;
+    border-radius: 12px;
+    width: 100%;
+  }
+
+  .phd-skeleton-badge {
+    height: 22px;
+    width: 80px;
+    border-radius: 100px;
+  }
+
+  @keyframes phdPulse {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+  }
+
+  /* Error state */
+  .phd-error {
+    color: var(--danger, #B8433A);
+    font-size: 13px;
+    background: var(--danger-soft, #FBE9E7);
+    padding: 10px 14px;
+    border-radius: 12px;
+    border: 1px solid var(--danger, #B8433A);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+`
+
+function CopyIcon({ size = 16 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+      <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+    </svg>
+  )
+}
+
+function CheckIcon({ size = 16 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+      <polyline points="20 6 9 17 4 12" />
+    </svg>
+  )
+}
+
+function ShieldCheckIcon({ size = 13 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+      <path d="m9 12 2 2 4-4" />
+    </svg>
+  )
+}
+
+function HelpIcon({ size = 13 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="10" />
+      <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
+      <line x1="12" y1="17" x2="12.01" y2="17" />
+    </svg>
+  )
+}
+
+function AlertTriangleIcon({ size = 16 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z" />
+      <line x1="12" y1="9" x2="12" y2="13" />
+      <line x1="12" y1="17" x2="12.01" y2="17" />
+    </svg>
+  )
 }
 
 export default function ProofHashDisplay({
-  isLoading,
-  proofHex = '0x3a4b92c81d7f6e0b5a3c8d9e2f4a1c5b8d9e0f3a6b2c7d9a1e0f3b4c5d6e7f8',
-  proofType = 'zk-SNARK / Groth16',
-  curve = 'BN254',
-  computationTimeMs = 84,
-  onVerify,
-  isVerified = false,
-  status = 'Verified',
+  proofHash,
+  verified = true,
+  loading = false,
+  error
 }: ProofHashDisplayProps) {
-  const [copied, setCopied] = React.useState(false)
+  const [copied, setCopied] = useState(false)
 
-  const handleCopy = () => {
-    navigator.clipboard.writeText(proofHex)
-    setCopied(true)
-    setTimeout(() => setCopied(false), 2000)
+  const handleCopy = async () => {
+    if (!proofHash) return
+    try {
+      await navigator.clipboard.writeText(proofHash)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    } catch (err) {
+      console.error('Failed to copy text: ', err)
+    }
   }
 
-  // Consistent styles and CSS variables matching swiftramp
-  const css = `
-    .proof-card {
-      background: #FFFFFF;
-      border: 1.5px solid #EAEAE6;
-      border-radius: 22px;
-      padding: 24px;
-      min-height: 250px;
-      box-shadow: 0 12px 40px rgba(10,10,10,0.05);
-      font-family: 'IBM Plex Sans', sans-serif;
-      box-sizing: border-box;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-    }
-    .proof-card-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 16px;
-    }
-    .proof-card-title {
-      font-family: 'Space Grotesk', sans-serif;
-      font-weight: 700;
-      font-size: 16px;
-      color: #0A0A0A;
-      margin: 0;
-    }
-    .proof-badge {
-      font-family: 'IBM Plex Mono', monospace;
-      font-size: 10px;
-      font-weight: 600;
-      background: #ECE8FE;
-      color: #5B3DF5;
-      padding: 4px 10px;
-      border-radius: 100px;
-      text-transform: uppercase;
-    }
-    .proof-hex-box {
-      font-family: 'IBM Plex Mono', monospace;
-      font-size: 11px;
-      color: #5B3DF5;
-      background: #ECE8FE;
-      border-radius: 10px;
-      padding: 12px;
-      margin-bottom: 16px;
-      word-break: break-all;
-      line-height: 1.5;
-      position: relative;
-      cursor: pointer;
-      border: 1px solid transparent;
-      transition: all 0.2s ease;
-    }
-    .proof-hex-box:hover {
-      border-color: #5B3DF5;
-    }
-    .copy-indicator {
-      position: absolute;
-      right: 10px;
-      bottom: 8px;
-      font-size: 9px;
-      font-weight: 600;
-      text-transform: uppercase;
-      opacity: 0.7;
-    }
-    .proof-grid {
-      display: grid;
-      grid-template-cols: 1fr 1fr;
-      gap: 12px;
-    }
-    .proof-param {
-      background: #F6F6F3;
-      border-radius: 10px;
-      padding: 10px;
-      font-size: 11px;
-    }
-    .proof-param-label {
-      color: #6B6960;
-      font-family: 'IBM Plex Mono', monospace;
-      font-size: 9px;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      margin-bottom: 2px;
-      display: block;
-    }
-    .proof-param-val {
-      font-weight: 600;
-      color: #0A0A0A;
-    }
-    .action-btn {
-      font-family: 'Space Grotesk', sans-serif;
-      font-weight: 700;
-      font-size: 13px;
-      color: #FFFFFF;
-      background: linear-gradient(135deg, #5B3DF5, #6F5CE0);
-      border: none;
-      border-radius: 10px;
-      padding: 10px 16px;
-      cursor: pointer;
-      width: 100%;
-      text-align: center;
-      transition: transform 0.15s ease, box-shadow 0.15s ease;
-      margin-top: 12px;
-    }
-    .action-btn:hover {
-      transform: translateY(-1px);
-      box-shadow: 0 4px 12px rgba(91,61,245,0.25);
-    }
-    .verified-badge {
-      background: #DCE8DE;
-      color: #17462B;
-      border: 1.5px solid rgba(23, 70, 43, 0.15);
-      border-radius: 10px;
-      padding: 10px 16px;
-      font-size: 13px;
-      font-weight: 600;
-      text-align: center;
-      margin-top: 12px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 6px;
-    }
-  `
-
-  if (isLoading) {
+  if (loading) {
     return (
-      <div
-        className="proof-card"
-        aria-busy="true"
-        aria-label="Loading proof hash details"
-        role="status"
-        style={{ minHeight: '250px' }}
-      >
-        <style dangerouslySetInnerHTML={{ __html: css }} />
-        <div className="proof-card-header">
-          <Skeleton variant="heading" width="160px" style={{ margin: 0 }} />
-          <Skeleton variant="text" width="65px" style={{ height: '18px', borderRadius: '100px' }} />
+      <div className="phd-container" aria-busy="true" aria-label="Loading proof hash details">
+        <style dangerouslySetInnerHTML={{ __html: CSS }} />
+        <div className="phd-box phd-skeleton phd-skeleton-box" />
+        <div className="phd-badge-row">
+          <div className="phd-skeleton phd-skeleton-badge" />
         </div>
-        
-        <Skeleton variant="text" width="100%" style={{ height: '58px', borderRadius: '10px', marginBottom: '16px' }} />
+      </div>
+    )
+  }
 
-        <div className="proof-grid">
-          <div className="proof-param">
-            <Skeleton variant="text" width="40px" style={{ height: '10px', marginBottom: '4px' }} />
-            <Skeleton variant="text" width="80px" style={{ height: '12px' }} />
-          </div>
-          <div className="proof-param">
-            <Skeleton variant="text" width="50px" style={{ height: '10px', marginBottom: '4px' }} />
-            <Skeleton variant="text" width="70px" style={{ height: '12px' }} />
-          </div>
+  if (error) {
+    return (
+      <div className="phd-container" role="alert">
+        <style dangerouslySetInnerHTML={{ __html: CSS }} />
+        <div className="phd-error">
+          <AlertTriangleIcon size={16} />
+          <span>{error}</span>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="proof-card" style={{ minHeight: '250px' }}>
-      <style dangerouslySetInnerHTML={{ __html: css }} />
-      <div className="proof-card-header">
-        <h3 className="proof-card-title">Cryptographic Proof</h3>
-        <span className="proof-badge">zk-SNARK</span>
+    <div className="phd-container">
+      <style dangerouslySetInnerHTML={{ __html: CSS }} />
+      <div className="phd-box">
+        <span className="phd-hash" aria-label={`Proof hash: ${proofHash}`}>
+          {proofHash}
+        </span>
+        <button
+          className="phd-copy-btn"
+          onClick={handleCopy}
+          aria-label={copied ? "Copied proof hash" : "Copy proof hash to clipboard"}
+          title={copied ? "Copied!" : "Copy"}
+        >
+          {copied ? <CheckIcon size={16} /> : <CopyIcon size={16} />}
+        </button>
       </div>
-
-      {status === 'Unverified' ? (
-        <div style={{
-          fontFamily: 'IBM Plex Mono',
-          fontSize: '12px',
-          color: '#6B6960',
-          background: '#F6F6F3',
-          border: '1.5px dashed #EAEAE6',
-          borderRadius: '10px',
-          padding: '24px 16px',
-          textAlign: 'center',
-          flex: 1,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          marginBottom: '16px'
-        }}>
-          Awaiting compliance enrollment to compute commitment...
-        </div>
-      ) : (
-        <>
-          <div className="proof-hex-box" onClick={handleCopy} title="Click to copy proof commitment" id="proof-hash-display">
-            {proofHex}
-            <span className="copy-indicator" style={{ color: copied ? '#17462B' : '#5B3DF5' }}>
-              {copied ? '✓ Copied' : 'Click to copy'}
-            </span>
-          </div>
-
-          <div className="proof-grid">
-            <div className="proof-param">
-              <span className="proof-param-label">Verifier Engine</span>
-              <span className="proof-param-val">{proofType}</span>
-            </div>
-            <div className="proof-param">
-              <span className="proof-param-label">Elliptic Curve</span>
-              <span className="proof-param-val">{curve} (Verified on-chain)</span>
-            </div>
-            <div className="proof-param" style={{ gridColumn: 'span 2' }}>
-              <span className="proof-param-label">Computation Time</span>
-              <span className="proof-param-val">{computationTimeMs}ms (Pedersen + SNARK)</span>
-            </div>
-          </div>
-
-          {isVerified ? (
-            <div className="verified-badge" id="verified-indicator">
-              ✓ Cryptographic Proof Verified on Ledger
-            </div>
-          ) : (
-            onVerify && (
-              <button className="action-btn" onClick={onVerify} id="verify-btn">
-                Verify Proof on Ledger
-              </button>
-            )
-          )}
-        </>
-      )}
+      <div className="phd-badge-row">
+        {verified ? (
+          <span className="phd-badge verified" aria-label="Status: Verified on-chain">
+            <ShieldCheckIcon size={13} />
+            Verified
+          </span>
+        ) : (
+          <span className="phd-badge unverified" aria-label="Status: Unverified on-chain">
+            <HelpIcon size={13} />
+            Unverified
+          </span>
+        )}
+      </div>
     </div>
   )
 }

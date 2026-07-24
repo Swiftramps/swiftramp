@@ -5,14 +5,17 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
+    "test": "node --test --experimental-strip-types tests/*.test.mjs",
     "start": "next start",
     "test:e2e": "playwright test"
   },
   "dependencies": {
     "@stellar/freighter-api": "^6.0.1",
+    "comlink": "^4.4.1",
     "next": "14.2.0",
     "react": "^18",
-    "react-dom": "^18"
+    "react-dom": "^18",
+    "snarkjs": "^0.7.3"
   },
   "devDependencies": {
     "@playwright/test": "^1.61.1",
