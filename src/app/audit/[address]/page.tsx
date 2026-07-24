@@ -1,10 +1,11 @@
 'use client'
 
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Navbar from '../../../../components/Navbar'
 import ProofHashDisplay from '../../../../components/ProofHashDisplay'
 import PreimageDetails from '../../../../components/PreimageDetails'
+import CancelEnrollmentModal from '../../../../components/CancelEnrollmentModal'
 
 interface AuditEvent {
   id: string
@@ -456,6 +457,16 @@ function ExternalLinkIcon({ size = 12 }: { size?: number }) {
   )
 }
 
+function AlertTriangleIcon({ size = 14 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+      <line x1="12" y1="9" x2="12" y2="13" />
+      <line x1="12" y1="17" x2="12.01" y2="17" />
+    </svg>
+  )
+}
+
 export default function AuditPage() {
   const params = useParams()
   const router = useRouter()
@@ -469,6 +480,8 @@ export default function AuditPage() {
   const [error, setError] = useState<string | null>(null)
   const [page, setPage] = useState(1)
   const pageSize = 2
+  const [cancelModalOpen, setCancelModalOpen] = useState(false)
+  const [selectedEnrollmentProofHash, setSelectedEnrollmentProofHash] = useState<string | undefined>(undefined)
 
   useEffect(() => {
     if (!isValidAddress) {
@@ -622,6 +635,25 @@ export default function AuditPage() {
                           </a>
                         </div>
                       </div>
+
+                      {/* Cancel action for Enrolled events */}
+                      {evt.type === 'Enrolled' && (
+                        <div style={{ marginTop: '16px', paddingTop: '14px', borderTop: '1px solid var(--line)' }}>
+                          <button
+                            className="cem-btn-primary"
+                            style={{ padding: '10px 16px', fontSize: '13px', borderRadius: '100px' }}
+                            onClick={() => {
+                              // Strip 0x prefix if present for the modal's internal generation
+                              const hash = evt.proofHash.replace(/^0x/, '')
+                              setSelectedEnrollmentProofHash(hash)
+                              setCancelModalOpen(true)
+                            }}
+                          >
+                            <AlertTriangleIcon size={14} />
+                            Cancel Enrollment
+                          </button>
+                        </div>
+                      )}
                     </div>
                   </div>
                 ))}
@@ -637,6 +669,34 @@ export default function AuditPage() {
           </>
         )}
       </div>
+
+      {/* Cancel Enrollment Modal */}
+      <CancelEnrollmentModal
+        isOpen={cancelModalOpen}
+        onClose={() => {
+          setCancelModalOpen(false)
+          setSelectedEnrollmentProofHash(undefined)
+        }}
+        proofHash={selectedEnrollmentProofHash}
+        walletAddress={address}
+        onSuccess={(cancelledEvent) => {
+          // Add the new Cancelled event to the list and refresh
+          setEvents(prev => {
+            const newEvent: AuditEvent = {
+              id: `evt-cancel-${Date.now()}`,
+              type: 'Cancelled',
+              timestamp: cancelledEvent.timestamp,
+              proofHash: cancelledEvent.hash,
+              txHash: cancelledEvent.txHash,
+              ledger: cancelledEvent.ledger,
+              verified: cancelledEvent.verified,
+            }
+            // Insert after the last event and sort
+            const updated = [...prev, newEvent]
+            return updated.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime())
+          })
+        }}
+      />
     </div>
   )
 }
