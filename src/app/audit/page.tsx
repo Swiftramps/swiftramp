@@ -211,33 +211,115 @@ export default function AuditPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [walletAddress, setWalletAddress] = useState('')
   const [proofHex, setProofHex] = useState('')
+  const [status, setStatus] = useState<'Verified' | 'Pending' | 'Unverified'>('Unverified')
+  const [isVerified, setIsVerified] = useState(false)
+  const [steps, setSteps] = useState<any[]>([])
+
+  const fetchState = async (addr: string) => {
+    try {
+      const res = await fetch(`/api/audit?walletAddress=${addr}`)
+      if (res.ok) {
+        const data = await res.json()
+        setStatus(data.status)
+        setProofHex(data.proofHex)
+        setIsVerified(data.isVerified)
+        setSteps(data.steps)
+      }
+    } catch (err) {
+      console.error(err)
+    }
+  }
 
   useEffect(() => {
     setIsClient(true)
     const storedAddress = window.localStorage.getItem(WALLET_STORAGE_KEY)
-    if (storedAddress) {
-      setWalletAddress(storedAddress)
-    } else {
-      setWalletAddress('GB3FUXLN27QJAX2K5HTZ2ANON7VUT4673UCDZVERIFIABLESTEL')
-    }
+    const addr = storedAddress || 'GB3FUXLN27QJAX2K5HTZ2ANON7VUT4673UCDZVERIFIABLESTEL'
+    setWalletAddress(addr)
 
-    setProofHex('0x' + randomHex(48))
-
-    // Simulate initial load to show skeletons beautifully
-    const t = setTimeout(() => {
-      setIsLoading(false)
-    }, 1500)
-    return () => clearTimeout(t)
+    fetchState(addr).then(() => {
+      const t = setTimeout(() => {
+        setIsLoading(false)
+      }, 800)
+      return () => clearTimeout(t)
+    })
   }, [])
+
+  useEffect(() => {
+    if (isClient && walletAddress) {
+      fetchState(walletAddress)
+    }
+  }, [walletAddress, isClient])
+
+  const handleEnroll = async () => {
+    setIsLoading(true)
+    try {
+      const res = await fetch('/api/audit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'enroll', walletAddress })
+      })
+      if (res.ok) {
+        const data = await res.json()
+        setStatus(data.status)
+        setProofHex(data.proofHex)
+        setIsVerified(data.isVerified)
+        setSteps(data.steps)
+      }
+    } catch (err) {
+      console.error(err)
+    } finally {
+      setTimeout(() => setIsLoading(false), 800)
+    }
+  }
+
+  const handleVerify = async () => {
+    setIsLoading(true)
+    try {
+      const res = await fetch('/api/audit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'verify', walletAddress })
+      })
+      if (res.ok) {
+        const data = await res.json()
+        setStatus(data.status)
+        setProofHex(data.proofHex)
+        setIsVerified(data.isVerified)
+        setSteps(data.steps)
+      }
+    } catch (err) {
+      console.error(err)
+    } finally {
+      setTimeout(() => setIsLoading(false), 800)
+    }
+  }
+
+  const handleCancel = async () => {
+    setIsLoading(true)
+    try {
+      const res = await fetch('/api/audit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'cancel', walletAddress })
+      })
+      if (res.ok) {
+        const data = await res.json()
+        setStatus(data.status)
+        setProofHex(data.proofHex)
+        setIsVerified(data.isVerified)
+        setSteps(data.steps)
+      }
+    } catch (err) {
+      console.error(err)
+    } finally {
+      setTimeout(() => setIsLoading(false), 800)
+    }
+  }
 
   const starById = (id: string) => STAR_NODES.find(n => n.id === id)!
 
   const triggerReload = () => {
-    setIsLoading(true)
-    setTimeout(() => {
-      setProofHex('0x' + randomHex(48))
-      setIsLoading(false)
-    }, 1200)
+    handleEnroll()
   }
 
   return (
@@ -325,15 +407,22 @@ export default function AuditPage() {
               <IdentityStatus
                 isLoading={isLoading}
                 walletAddress={walletAddress}
+                status={status}
+                onEnroll={handleEnroll}
+                onCancel={handleCancel}
               />
               <ProofHashDisplay
                 isLoading={isLoading}
                 proofHex={proofHex}
+                status={status}
+                isVerified={isVerified}
+                onVerify={handleVerify}
               />
             </div>
             <div className="audit-column">
               <AuditTrailView
                 isLoading={isLoading}
+                steps={steps}
               />
             </div>
           </div>

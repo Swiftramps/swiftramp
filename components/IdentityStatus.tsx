@@ -6,6 +6,8 @@ interface IdentityStatusProps {
   walletAddress?: string
   kycTier?: string
   status?: 'Verified' | 'Pending' | 'Unverified'
+  onEnroll?: () => void
+  onCancel?: () => void
 }
 
 export default function IdentityStatus({
@@ -13,6 +15,8 @@ export default function IdentityStatus({
   walletAddress = 'GB3FUX...5H7Z2A',
   kycTier = 'Tier 1 (Basic Shielded Remittance)',
   status = 'Verified',
+  onEnroll,
+  onCancel,
 }: IdentityStatusProps) {
 
   const css = `
@@ -117,6 +121,30 @@ export default function IdentityStatus({
       align-items: center;
       gap: 3px;
     }
+    .action-btn {
+      font-family: 'Space Grotesk', sans-serif;
+      font-weight: 700;
+      font-size: 13px;
+      color: #FFFFFF;
+      background: linear-gradient(135deg, #5B3DF5, #6F5CE0);
+      border: none;
+      border-radius: 10px;
+      padding: 10px 16px;
+      cursor: pointer;
+      width: 100%;
+      text-align: center;
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+    .action-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(91,61,245,0.25);
+    }
+    .action-btn.danger {
+      background: linear-gradient(135deg, #A8201A, #C8302A);
+    }
+    .action-btn.danger:hover {
+      box-shadow: 0 4px 12px rgba(168,32,26,0.25);
+    }
   `
 
   if (isLoading) {
@@ -175,23 +203,45 @@ export default function IdentityStatus({
         </div>
       </div>
 
-      <div className="id-row-item" style={{ marginBottom: 0 }}>
-        <div className="id-details">
-          <span className="id-detail-label">Verification Tier</span>
-          <div className="id-detail-value" style={{ marginBottom: '6px' }}>{kycTier}</div>
-          <div className="id-checks">
-            <span className="id-check-pill">
-              ✓ AML Checked
-            </span>
-            <span className="id-check-pill">
-              ✓ Sanctions Clear
-            </span>
-            <span className="id-check-pill">
-              ✓ Geo Verified
+      {status === 'Unverified' ? (
+        <div style={{ marginTop: '4px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          <div className="id-checks" style={{ justifyContent: 'flex-start', marginBottom: '4px' }}>
+            <span className="id-check-pill" style={{ background: '#FCE8E6', color: '#A8201A', borderColor: 'rgba(168,32,26,0.15)' }}>
+              ✗ Unenrolled in Shielded Compliance
             </span>
           </div>
+          {onEnroll && (
+            <button className="action-btn" onClick={onEnroll} id="enroll-btn">
+              Enroll in Shielded Compliance
+            </button>
+          )}
         </div>
-      </div>
+      ) : (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          <div className="id-row-item" style={{ marginBottom: 0 }}>
+            <div className="id-details">
+              <span className="id-detail-label">Verification Tier</span>
+              <div className="id-detail-value" style={{ marginBottom: '6px' }}>{kycTier}</div>
+              <div className="id-checks">
+                <span className="id-check-pill">
+                  ✓ AML Checked
+                </span>
+                <span className="id-check-pill">
+                  ✓ Sanctions Clear
+                </span>
+                <span className="id-check-pill">
+                  ✓ Geo Verified
+                </span>
+              </div>
+            </div>
+          </div>
+          {onCancel && (
+            <button className="action-btn danger" onClick={onCancel} id="cancel-btn">
+              Cancel Enrollment
+            </button>
+          )}
+        </div>
+      )}
     </div>
   )
 }

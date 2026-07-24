@@ -1,0 +1,6 @@
+
+Running 1 test using 1 worker
+
+  ✓  1 [chromium] › tests/audit-flow.spec.ts:4:7 › Cryptographic Audit Trail Flow › should complete the full compliance lifecycle: enroll -> see proof -> verify -> cancel (6.4s)
+
+  1 passed (20.0s)
