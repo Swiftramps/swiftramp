@@ -11,7 +11,7 @@ import {
   getAddress as freighterGetAddress,
 } from '@stellar/freighter-api'
 
-type Stage = 'idle' | 'checking' | 'no-wallet' | 'requesting' | 'connected' | 'error'
+type Stage = 'idle' | 'checking' | 'no-wallet' | 'requesting' | 'connected' | 'error' | 'identity-not-registered' | 'identity-revoked' | 'network-error'
 
 // Change this if your swap/converter screen lives at a different route.
 const SWAP_ROUTE = '/swap'
@@ -215,8 +215,18 @@ export default function GetStartedPage() {
 
       const allowedResult = await freighterIsAllowed()
       if (allowedResult.error) {
-        setStage('error')
-        setErrorMsg(allowedResult.error.message || 'Freighter returned an error while checking permissions.')
+        // Example: map error types to specific stages
+        const errMsg = allowedResult.error.message?.toLowerCase() || ''
+        if (errMsg.includes('network') || errMsg.includes('connection')) {
+          setStage('network-error')
+        } else if (errMsg.includes('revoked')) {
+          setStage('identity-revoked')
+        } else if (errMsg.includes('registered') || errMsg.includes('not found')) {
+          setStage('identity-not-registered')
+        } else {
+          setStage('error')
+          setErrorMsg(allowedResult.error.message || 'Freighter returned an error while checking permissions.')
+        }
         return
       }
       if (!allowedResult.isAllowed) {
@@ -230,8 +240,18 @@ export default function GetStartedPage() {
 
       const addressResult = await freighterGetAddress()
       if (addressResult.error || !addressResult.address) {
-        setStage('error')
-        setErrorMsg(addressResult.error?.message || 'Could not retrieve a wallet address from Freighter.')
+        // Example: map address result errors to specific stages
+        const errMsg = addressResult.error?.message?.toLowerCase() || ''
+        if (errMsg.includes('network') || errMsg.includes('connection')) {
+          setStage('network-error')
+        } else if (errMsg.includes('revoked')) {
+          setStage('identity-revoked')
+        } else if (errMsg.includes('registered') || errMsg.includes('not found')) {
+          setStage('identity-not-registered')
+        } else {
+          setStage('error')
+          setErrorMsg(addressResult.error?.message || 'Could not retrieve a wallet address from Freighter.')
+        }
         return
       }
 
@@ -243,8 +263,13 @@ export default function GetStartedPage() {
         router.push(SWAP_ROUTE)
       }, 1400)
     } catch (err) {
-      setStage('error')
-      setErrorMsg(err instanceof Error ? err.message : 'Something went wrong connecting to Freighter.')
+      const errMsg = err instanceof Error ? err.message?.toLowerCase() : ''
+      if (errMsg?.includes('network') || errMsg?.includes('connection')) {
+        setStage('network-error')
+      } else {
+        setStage('error')
+        setErrorMsg(err instanceof Error ? err.message : 'Something went wrong connecting to Freighter.')
+      }
     }
   }, [router])
 
@@ -327,6 +352,39 @@ export default function GetStartedPage() {
             <div className="gs-wallet-icon error"><AlertIcon /></div>
             <h2 className="display">Couldn't connect</h2>
             <div className="gs-error-box">{errorMsg}</div>
+            <button className="gs-btn-primary" onClick={connect}>Try again</button>
+          </div>
+        )}
+
+        {stage === 'identity-not-registered' && (
+          <div className="gs-card">
+            <div className="gs-wallet-icon error"><AlertIcon /></div>
+            <h2 className="display">Identity not registered</h2>
+            <p className="desc">
+              We couldn't find your registered identity. Please register your identity and try again.
+            </p>
+            <button className="gs-btn-primary" onClick={connect}>Try again</button>
+          </div>
+        )}
+
+        {stage === 'identity-revoked' && (
+          <div className="gs-card">
+            <div className="gs-wallet-icon error"><AlertIcon /></div>
+            <h2 className="display">Identity revoked</h2>
+            <p className="desc">
+              Your identity has been revoked. Please contact support or re-register your identity.
+            </p>
+            <button className="gs-btn-primary" onClick={connect}>Try again</button>
+          </div>
+        )}
+
+        {stage === 'network-error' && (
+          <div className="gs-card">
+            <div className="gs-wallet-icon error"><AlertIcon /></div>
+            <h2 className="display">Network error</h2>
+            <p className="desc">
+              We're having trouble connecting to the network. Please check your connection and try again.
+            </p>
             <button className="gs-btn-primary" onClick={connect}>Try again</button>
           </div>
         )}
