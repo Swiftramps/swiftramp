@@ -4,7 +4,7 @@ import Navbar from '../../../components/Navbar'
 import RateStatus from '../../../components/RateStatus'
 import { useRates } from '../../lib/useRates'
 
-import { rates, flags, names, ccyList } from '@/lib/constants'
+import { flags, names, ccyList } from '@/lib/constants'
 
 // Base currency the board quotes against. Fixed deliberately — this is a
 // reference board, not the swap form, so it doesn't need a picker.

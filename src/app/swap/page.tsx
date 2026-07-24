@@ -4,7 +4,7 @@ import RateStatus from '../../../components/RateStatus'
 import { useRates } from '../../lib/useRates'
 import AuditVerifiedBadge from '../../../components/AuditVerifiedBadge'
 import { generateProof } from '../../lib/prover'
-import { rates, flags, ccyList } from '@/lib/constants'
+import { flags, ccyList } from '@/lib/constants'
 const tickerPairs = [
   ['USD', 'NGN'], ['USD', 'KES'], ['USD', 'GHS'], ['USD', 'ZAR'], ['EUR', 'NGN'], ['GBP', 'NGN'], ['USD', 'EUR'],
 ]
