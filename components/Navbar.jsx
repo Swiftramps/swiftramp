@@ -268,6 +268,7 @@ const CSS = `
 const LINKS = [
   { label: 'How it works', href: '/how-it-works' },
   { label: 'Rates', href: '/rates' },
+  { label: 'Audit', href: '/audit' },
   { label: 'Company', href: '/company' },
 ]
 
