@@ -1,6 +1,7 @@
 'use client'
 import Navbar from '../../../components/Navbar'
 import EnrollmentForm from '../../../components/EnrollmentForm'
+import EnrollmentDetailCard from '../../../components/EnrollmentDetailCard'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 
@@ -34,7 +35,13 @@ export default function EnrollPage() {
         {enrollment ? (
           <div className="enroll-done">
             <h2>Enrollment recorded</h2>
-            <p>Your enrollment is committed with proof hash <strong>{enrollment.proof_hash}</strong>.</p>
+            <p>Your enrollment is committed on-chain. Copy the proof hash — it is the anchor of your audit trail.</p>
+            <div style={{ maxWidth: '520px', margin: '0 auto 22px' }}>
+              <EnrollmentDetailCard
+                address={enrollment.address}
+                proofHash={enrollment.proof_hash}
+              />
+            </div>
             <button onClick={() => router.push(`/audit/${enrollment.address}`)}>View audit trail</button>
           </div>
         ) : (
