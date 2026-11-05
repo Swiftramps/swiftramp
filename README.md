@@ -136,3 +136,5 @@ All rates are USD-relative constants. Converting `A → B` is computed as `amoun
 - [ ] Extract `rates`/`flags`/currency metadata into a shared module.
 - [ ] Add a `/public/images/logo.png` asset — `Navbar.tsx` references it via `next/image` and will 404 without it.
 - [ ] Wire real anchors/routes for the mobile nav panel's "Get started" button (currently just closes the panel).
+
+<!-- Verified for issue #37: feat(identity): display queue membership information on identity detail view -->
